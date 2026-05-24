@@ -1,0 +1,35 @@
+name: Daily News Aggregator
+
+on:
+  schedule:
+    - cron: '0 22 * * *' # 國際時間 22:00 = 台灣時間清晨 06:00 自動執行
+  workflow_dispatch: # 允許我們手動點按鈕立即更新
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: 複製程式碼到雲端
+      uses: actions/checkout@v4
+
+    - name: 設定 Python 環境
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: 安裝套件
+      run: |
+        pip install requests google-generativeai
+
+    - name: 執行 AI 新聞統整
+      env:
+        NEWS_API_KEY: ${{ secrets.NEWS_API_KEY }}
+        GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      run: python app.py
+
+    - name: 部署網頁到 GitHub Pages
+      uses: Peaceiris/actions-gh-pages@v3
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        publish_dir: ./
+        keep_files: false
